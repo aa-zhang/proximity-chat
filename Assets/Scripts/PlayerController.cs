@@ -4,33 +4,30 @@ using UnityEngine;
 using FishNet.Connection;
 using FishNet.Object;
 
-//This is made by Bobsi Unity - Youtube
 public class PlayerController : NetworkBehaviour
 {
     [Header("Base setup")]
-    public float walkingSpeed = 7.5f;
-    public float runningSpeed = 11.5f;
-    public float jumpSpeed = 8.0f;
-    public float gravity = 20.0f;
-    public float lookSpeed = 2.0f;
-    public float lookXLimit = 45.0f;
+    [SerializeField] private float walkingSpeed = 7.5f;
+    [SerializeField] private float runningSpeed = 11.5f;
+    [SerializeField] private float jumpForce = 8.0f;
+    [SerializeField] private float gravity = 20.0f;
+    [SerializeField] private float lookSpeed = 2.0f;
+    [SerializeField] private float lookXLimit = 45.0f;
+    [SerializeField] private float cameraYOffset = 0.4f;
+
 
     CharacterController characterController;
     Vector3 moveDirection = Vector3.zero;
-    float rotationX = 0;
+    bool isRunning = false;
 
-    [HideInInspector]
-    public bool canMove = true;
-
-    [SerializeField]
-    private float cameraYOffset = 0.4f;
+    private float cameraVerticalRotation = 0;
     private Camera playerCamera;
 
 
     public override void OnStartClient()
     {
         base.OnStartClient();
-        if (base.IsOwner)
+        if (IsOwner)
         {
             playerCamera = Camera.main;
             playerCamera.transform.position = new Vector3(transform.position.x, transform.position.y + cameraYOffset, transform.position.z);
@@ -53,44 +50,69 @@ public class PlayerController : NetworkBehaviour
 
     void Update()
     {
-        bool isRunning = false;
+        GetMovementInput();
+        GetCameraInput();
+        GetMenuInput();
 
-        // Press Left Shift to run
+        // Move player
+        characterController.Move(moveDirection * Time.deltaTime);
+
+    }
+
+    private void GetMovementInput()
+    {
+        // Horizontal plane movement (X-Z axis)
         isRunning = Input.GetKey(KeyCode.LeftShift);
 
-        // We are grounded, so recalculate move direction based on axis
-        Vector3 forward = transform.TransformDirection(Vector3.forward);
-        Vector3 right = transform.TransformDirection(Vector3.right);
+        Vector3 rawDirection = (transform.right * Input.GetAxis("Horizontal")) +
+                               (transform.forward * Input.GetAxis("Vertical"));
 
-        float curSpeedX = canMove ? (isRunning ? runningSpeed : walkingSpeed) * Input.GetAxis("Vertical") : 0;
-        float curSpeedY = canMove ? (isRunning ? runningSpeed : walkingSpeed) * Input.GetAxis("Horizontal") : 0;
-        float movementDirectionY = moveDirection.y;
-        moveDirection = (forward * curSpeedX) + (right * curSpeedY);
-
-        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
+        if (rawDirection != Vector3.zero)
         {
-            moveDirection.y = jumpSpeed;
+            if (rawDirection.magnitude > 1f)
+            {
+                rawDirection.Normalize();
+            }
+            moveDirection = rawDirection * (isRunning ? runningSpeed : walkingSpeed);
         }
         else
         {
-            moveDirection.y = movementDirectionY;
+            moveDirection = Vector3.zero;
+        }
+
+        // Vertical movement (Y axis)
+        if (Input.GetButton("Jump") && characterController.isGrounded)
+        {
+            moveDirection.y = jumpForce;
         }
 
         if (!characterController.isGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
         }
+    }
 
-        // Move the controller
-        characterController.Move(moveDirection * Time.deltaTime);
+    private void GetCameraInput()
+    {
+        // Horizontal rotation
+        float mouseX = Input.GetAxis("Mouse X");
+        Quaternion horizontalRotation = Quaternion.Euler(0f, mouseX * lookSpeed, 0f);
+        transform.rotation *= horizontalRotation; // Rotate player around Y-axis
 
-        // Player and Camera rotation
-        if (canMove && playerCamera != null)
+        // Vertical rotation
+        float mouseY = -Input.GetAxis("Mouse Y"); // Invert Y-axis for camera movement
+        cameraVerticalRotation += mouseY * lookSpeed;
+        cameraVerticalRotation = Mathf.Clamp(cameraVerticalRotation, -lookXLimit, lookXLimit);
+        playerCamera.transform.localRotation = Quaternion.Euler(cameraVerticalRotation, 0f, 0f); // Rotate camera vertically
+    }
+
+    private void GetMenuInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
-            rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
-            playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
-            transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
+
 }
