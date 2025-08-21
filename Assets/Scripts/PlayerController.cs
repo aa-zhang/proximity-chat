@@ -66,19 +66,15 @@ public class PlayerController : NetworkBehaviour
 
         Vector3 rawDirection = (transform.right * Input.GetAxis("Horizontal")) +
                                (transform.forward * Input.GetAxis("Vertical"));
+    
+        if (rawDirection.magnitude > 1f)
+        {
+            rawDirection.Normalize();
+        }
 
-        if (rawDirection != Vector3.zero)
-        {
-            if (rawDirection.magnitude > 1f)
-            {
-                rawDirection.Normalize();
-            }
-            moveDirection = rawDirection * (isRunning ? runningSpeed : walkingSpeed);
-        }
-        else
-        {
-            moveDirection = Vector3.zero;
-        }
+        float currMoveDirectionY = moveDirection.y; // Preserve the current vertical movement
+        moveDirection = rawDirection * (isRunning ? runningSpeed : walkingSpeed);
+        moveDirection.y = currMoveDirectionY;
 
         // Vertical movement (Y axis)
         if (Input.GetButton("Jump") && characterController.isGrounded)
