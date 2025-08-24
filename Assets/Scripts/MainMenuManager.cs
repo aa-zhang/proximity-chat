@@ -53,8 +53,8 @@ public class MainMenuManager : MonoBehaviour
 
     public void JoinLobby()
     {
-        CSteamID steamID = new CSteamID(Convert.ToUInt64(lobbyInput.text));
-        BootstrapManager.JoinByID(steamID);
+        CSteamID steamLobbyID = new CSteamID(Convert.ToUInt64(lobbyInput.text));
+        BootstrapManager.JoinByID(steamLobbyID);
     }
 
     public void LeaveLobby()
@@ -65,7 +65,13 @@ public class MainMenuManager : MonoBehaviour
 
     public void StartGame()
     {
-        string[] scenesToClose = new string[] { "MenuScene" };
-        BootstrapNetworkManager.ChangeNetworkScene("SteamGameScene", scenesToClose);
+        // Host only should call this.
+        //if (!SteamManager.Initialized) return;
+
+        // Close the menu scene so only the game scene stays.
+        UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+
+        // NOTE: The FishNet NetworkManager is inside GameScene, so it will boot up there.
+        // The Steam lobby has already been created, so clients will join automatically.
     }
 }

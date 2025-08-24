@@ -1,4 +1,3 @@
-using FishNet.Managing;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,8 +8,6 @@ public class BootstrapManager : MonoBehaviour
     private void Awake() => instance = this;
 
     [SerializeField] private string menuName = "MenuScene";
-    [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
 
     protected Callback<LobbyCreated_t> LobbyCreated;
     protected Callback<GameLobbyJoinRequested_t> JoinRequest;
@@ -42,14 +39,14 @@ public class BootstrapManager : MonoBehaviour
         {
             Debug.Log("Lobby creation failed");
             return;
-
         }
 
         CurrentLobbyID = callback.m_ulSteamIDLobby;
+
+        // Store host info in lobby data
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress", SteamUser.GetSteamID().ToString());
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "name", SteamFriends.GetPersonaName() + "'s lobby");
-        _fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
-        _fishySteamworks.StartConnection(true);
+
         Debug.Log("Lobby creation was successful");
     }
 
@@ -62,10 +59,11 @@ public class BootstrapManager : MonoBehaviour
     {
         CurrentLobbyID = callback.m_ulSteamIDLobby;
 
-        MainMenuManager.LobbyEntered(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name"), _networkManager.IsServerStarted);
+        string lobbyName = SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name");
+        MainMenuManager.LobbyEntered(lobbyName, true);
 
-        _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
-        _fishySteamworks.StartConnection(false);
+        // At this point you’re *in* the lobby, but networking hasn’t started yet.
+        // Later, when host clicks "Start Game", you load the actual game scene.
     }
 
     public static void JoinByID(CSteamID steamID)
@@ -82,8 +80,6 @@ public class BootstrapManager : MonoBehaviour
         SteamMatchmaking.LeaveLobby(new CSteamID(CurrentLobbyID));
         CurrentLobbyID = 0;
 
-        instance._fishySteamworks.StopConnection(false);
-        if (instance._networkManager.IsServer)
-            instance._fishySteamworks.StopConnection(true);
+        Debug.Log("Left lobby");
     }
 }

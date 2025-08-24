@@ -22,7 +22,7 @@ public class PlayerController : NetworkBehaviour
 
     private float cameraVerticalRotation = 0;
     private Camera playerCamera;
-
+    private bool clientInitialized = false;
 
     public override void OnStartClient()
     {
@@ -37,6 +37,7 @@ public class PlayerController : NetworkBehaviour
         {
             gameObject.GetComponent<PlayerController>().enabled = false;
         }
+        clientInitialized = true;
     }
 
     void Start()
@@ -50,6 +51,9 @@ public class PlayerController : NetworkBehaviour
 
     void Update()
     {
+        if (!clientInitialized)
+            return;
+
         GetMovementInput();
         GetCameraInput();
         GetMenuInput();
@@ -99,6 +103,7 @@ public class PlayerController : NetworkBehaviour
         float mouseY = -Input.GetAxis("Mouse Y"); // Invert Y-axis for camera movement
         cameraVerticalRotation += mouseY * lookSpeed;
         cameraVerticalRotation = Mathf.Clamp(cameraVerticalRotation, -lookXLimit, lookXLimit);
+        Debug.Log(playerCamera);
         playerCamera.transform.localRotation = Quaternion.Euler(cameraVerticalRotation, 0f, 0f); // Rotate camera vertically
     }
 
