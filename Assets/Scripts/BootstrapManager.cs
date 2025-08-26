@@ -1,3 +1,4 @@
+using FishNet.Managing;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,6 +9,8 @@ public class BootstrapManager : MonoBehaviour
     private void Awake() => instance = this;
 
     [SerializeField] private string menuName = "MenuScene";
+    [SerializeField] private NetworkManager _networkManager;
+    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
 
     protected Callback<LobbyCreated_t> LobbyCreated;
     protected Callback<GameLobbyJoinRequested_t> JoinRequest;
@@ -46,6 +49,8 @@ public class BootstrapManager : MonoBehaviour
         // Store host info in lobby data
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress", SteamUser.GetSteamID().ToString());
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "name", SteamFriends.GetPersonaName() + "'s lobby");
+        _fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
+        _fishySteamworks.StartConnection(true);
 
         Debug.Log("Lobby creation was successful");
     }
@@ -57,13 +62,15 @@ public class BootstrapManager : MonoBehaviour
 
     private void OnLobbyEntered(LobbyEnter_t callback)
     {
+        Debug.Log("Joined lobby: " + callback.m_ulSteamIDLobby);
         CurrentLobbyID = callback.m_ulSteamIDLobby;
 
-        string lobbyName = SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name");
-        MainMenuManager.LobbyEntered(lobbyName, true);
-
-        // At this point you’re *in* the lobby, but networking hasn’t started yet.
-        // Later, when host clicks "Start Game", you load the actual game scene.
+        if (!_networkManager.IsServer)
+        {
+            _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
+            _fishySteamworks.StartConnection(false);
+        }
+        MainMenuManager.LobbyEntered(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name"), _networkManager.IsServer);
     }
 
     public static void JoinByID(CSteamID steamID)
