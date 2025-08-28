@@ -1,4 +1,7 @@
+using FishNet;
+using FishNet.Connection;
 using FishNet.Managing;
+using FishNet.Transporting;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -65,11 +68,8 @@ public class BootstrapManager : MonoBehaviour
         Debug.Log("Joined lobby: " + callback.m_ulSteamIDLobby);
         CurrentLobbyID = callback.m_ulSteamIDLobby;
 
-        if (!_networkManager.IsServer)
-        {
-            _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
-            _fishySteamworks.StartConnection(false);
-        }
+        _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
+        _fishySteamworks.StartConnection(false);
         MainMenuManager.LobbyEntered(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name"), _networkManager.IsServer);
     }
 

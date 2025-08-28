@@ -103,7 +103,6 @@ public class PlayerController : NetworkBehaviour
         float mouseY = -Input.GetAxis("Mouse Y"); // Invert Y-axis for camera movement
         cameraVerticalRotation += mouseY * lookSpeed;
         cameraVerticalRotation = Mathf.Clamp(cameraVerticalRotation, -lookXLimit, lookXLimit);
-        Debug.Log(playerCamera);
         playerCamera.transform.localRotation = Quaternion.Euler(cameraVerticalRotation, 0f, 0f); // Rotate camera vertically
     }
 
