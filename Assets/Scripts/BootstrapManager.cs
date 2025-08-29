@@ -12,8 +12,8 @@ public class BootstrapManager : MonoBehaviour
     private void Awake() => instance = this;
 
     [SerializeField] private string menuName = "MenuScene";
-    [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private FishySteamworks.FishySteamworks _fishySteamworks;
+    [SerializeField] private NetworkManager networkManager;
+    [SerializeField] private FishySteamworks.FishySteamworks fishySteamworks;
 
     protected Callback<LobbyCreated_t> LobbyCreated;
     protected Callback<GameLobbyJoinRequested_t> JoinRequest;
@@ -30,6 +30,7 @@ public class BootstrapManager : MonoBehaviour
 
     public void GoToMenu()
     {
+        // This method gets called in the inspector once steam is initialized
         SceneManager.LoadScene(menuName, LoadSceneMode.Additive);
     }
 
@@ -40,10 +41,10 @@ public class BootstrapManager : MonoBehaviour
 
     private void OnLobbyCreated(LobbyCreated_t callback)
     {
-        Debug.Log("Starting lobby creation: " + callback.m_eResult.ToString());
+        Debug.Log("Creating Lobby");
         if (callback.m_eResult != EResult.k_EResultOK)
         {
-            Debug.Log("Lobby creation failed");
+            Debug.Log("Lobby creation failed: " + callback.m_eResult.ToString());
             return;
         }
 
@@ -52,8 +53,8 @@ public class BootstrapManager : MonoBehaviour
         // Store host info in lobby data
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress", SteamUser.GetSteamID().ToString());
         SteamMatchmaking.SetLobbyData(new CSteamID(CurrentLobbyID), "name", SteamFriends.GetPersonaName() + "'s lobby");
-        _fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
-        _fishySteamworks.StartConnection(true);
+        fishySteamworks.SetClientAddress(SteamUser.GetSteamID().ToString());
+        fishySteamworks.StartConnection(true); // Start server
 
         Debug.Log("Lobby creation was successful");
     }
@@ -68,18 +69,22 @@ public class BootstrapManager : MonoBehaviour
         Debug.Log("Joined lobby: " + callback.m_ulSteamIDLobby);
         CurrentLobbyID = callback.m_ulSteamIDLobby;
 
-        _fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
-        _fishySteamworks.StartConnection(false);
-        MainMenuManager.LobbyEntered(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "name"), _networkManager.IsServer);
+        fishySteamworks.SetClientAddress(SteamMatchmaking.GetLobbyData(new CSteamID(CurrentLobbyID), "HostAddress"));
+        fishySteamworks.StartConnection(false); // Start client connection
+        SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
     }
 
     public static void JoinByID(CSteamID steamID)
     {
         Debug.Log("Attempting to join lobby with ID: " + steamID.m_SteamID);
         if (SteamMatchmaking.RequestLobbyData(steamID))
+        {
             SteamMatchmaking.JoinLobby(steamID);
+        }
         else
+        {
             Debug.Log("Failed to join lobby with ID: " + steamID.m_SteamID);
+        }
     }
 
     public static void LeaveLobby()
