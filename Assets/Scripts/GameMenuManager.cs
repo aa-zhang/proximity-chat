@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class GameMenuManager : MonoBehaviour
 {
     private static GameMenuManager instance;
     [SerializeField] private GameObject menuUI;
+    [SerializeField] private TextMeshProUGUI lobbyIDText;
 
     private void Awake() => instance = this;
 
@@ -36,7 +38,10 @@ public class GameMenuManager : MonoBehaviour
         instance.menuUI.SetActive(isOpen);
     }
 
-
+    public void CopyLobbyID()
+    {
+        GUIUtility.systemCopyBuffer = lobbyIDText.text;
+    }
 
 
 
