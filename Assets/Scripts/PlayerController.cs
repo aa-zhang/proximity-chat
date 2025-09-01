@@ -19,6 +19,7 @@ public class PlayerController : NetworkBehaviour
     CharacterController characterController;
     Vector3 moveDirection = Vector3.zero;
     bool isRunning = false;
+    bool isMovementDisabled = false;
 
     private float cameraVerticalRotation = 0;
     private Camera playerCamera;
@@ -54,13 +55,19 @@ public class PlayerController : NetworkBehaviour
         if (!clientInitialized)
             return;
 
-        GetMovementInput();
-        GetCameraInput();
-        GetMenuInput();
+
+        if (!isMovementDisabled)
+        {
+            GetMovementInput();
+            GetCameraInput();
+        }
 
         // Move player
+        ApplyGravity();
         characterController.Move(moveDirection * Time.deltaTime);
 
+        // Menu input
+        GetMenuInput();
     }
 
     private void GetMovementInput()
@@ -86,6 +93,11 @@ public class PlayerController : NetworkBehaviour
             moveDirection.y = jumpForce;
         }
 
+        
+    }
+
+    private void ApplyGravity()
+    {
         if (!characterController.isGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
@@ -110,8 +122,22 @@ public class PlayerController : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            bool isMenuOpen = GameMenuManager.ToggleGameMenu();
+
+            if (!isMenuOpen)
+            {
+                // Lock cursor
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            else
+            {
+                // Unlock cursor
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+
+            isMovementDisabled = isMenuOpen;
         }
     }
 
