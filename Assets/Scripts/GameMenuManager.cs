@@ -15,6 +15,7 @@ public class GameMenuManager : MonoBehaviour
     void Start()
     {
         instance.menuUI.SetActive(false);
+        lobbyIDText.text = BootstrapManager.CurrentLobbyID.ToString();
     }
 
 
@@ -43,6 +44,9 @@ public class GameMenuManager : MonoBehaviour
         GUIUtility.systemCopyBuffer = lobbyIDText.text;
     }
 
-
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
 
 }
