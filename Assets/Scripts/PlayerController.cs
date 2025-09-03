@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
 {
-    [Header("Base setup")]
+    // Movement values
     [SerializeField] private float walkingSpeed = 7.5f;
     [SerializeField] private float runningSpeed = 11.5f;
     [SerializeField] private float jumpForce = 8.0f;
@@ -24,8 +24,10 @@ public class PlayerController : NetworkBehaviour
 
     private float cameraVerticalRotation = 0;
     private Camera playerCamera;
+
+    // Network/Voice loading flags
     private bool clientInitialized = false;
-    private bool updateVoicePosition = false;
+    private bool vivoxLoaded = false;
 
     public override void OnStartClient()
     {
@@ -51,15 +53,17 @@ public class PlayerController : NetworkBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
     private void OnEnable()
     {
-        VoiceController.instance.OnVivoxReady += StartUpdatingVoicePosition;
+        VoiceController.instance.OnVivoxReady += OnVivoxReady;
     }
 
     private void OnDisable()
     {
-        VoiceController.instance.OnVivoxReady -= StartUpdatingVoicePosition;
+        VoiceController.instance.OnVivoxReady -= OnVivoxReady;
     }
+
     void Update()
     {
         if (!clientInitialized || !IsOwner)
@@ -79,18 +83,15 @@ public class PlayerController : NetworkBehaviour
         // Menu input
         GetMenuInput();
 
-        if (updateVoicePosition)
+        if (vivoxLoaded)
         {
-            VivoxService.Instance.Set3DPosition(
-            this.gameObject,
-            "GameWorld"
-        );
+            UpdateVoicePosition();
         }
     }
 
-    private void StartUpdatingVoicePosition()
+    private void OnVivoxReady()
     {
-        updateVoicePosition = true;
+        vivoxLoaded = true;
     }
 
     private void GetMovementInput()
@@ -162,6 +163,11 @@ public class PlayerController : NetworkBehaviour
 
             isMovementDisabled = isMenuOpen;
         }
+    }
+
+    private void UpdateVoicePosition()
+    {
+        VivoxService.Instance.Set3DPosition(gameObject, "GameWorld");
     }
 
 }
