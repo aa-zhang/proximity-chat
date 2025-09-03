@@ -1,8 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using FishNet.Connection;
 using FishNet.Object;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Services.Vivox;
+using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -49,10 +50,18 @@ public class PlayerController : NetworkBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+    private void OnEnable()
+    {
+        VoiceController.instance.OnVivoxReady += StartUpdatingVoicePosition;
+    }
 
+    private void OnDisable()
+    {
+        VoiceController.instance.OnVivoxReady -= StartUpdatingVoicePosition;
+    }
     void Update()
     {
-        if (!clientInitialized)
+        if (!clientInitialized || !IsOwner)
             return;
 
 
@@ -68,6 +77,14 @@ public class PlayerController : NetworkBehaviour
 
         // Menu input
         GetMenuInput();
+    }
+
+    private void StartUpdatingVoicePosition()
+    {
+        VivoxService.Instance.Set3DPosition(
+            this.gameObject,
+            "GameWorld"
+        );
     }
 
     private void GetMovementInput()

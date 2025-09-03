@@ -6,18 +6,36 @@ using Unity.Services.Vivox;
 
 public class VoiceController : MonoBehaviour
 {
+    public static VoiceController instance;
+    private void Awake() => instance = this;
+    public event Action OnVivoxReady;
+
+
     private async void Start()
     {
         await InitializeServicesAsync();
         await LoginVivoxAsync();
         //await JoinEchoChannelAsync();
         await JoinPositionalChannelAsync();
+        OnVivoxReady?.Invoke();
     }
 
     private async System.Threading.Tasks.Task InitializeServicesAsync()
     {
         await UnityServices.InitializeAsync();
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        Debug.Log("IsSignedIn before login: " + AuthenticationService.Instance.IsSignedIn);
+        Debug.Log("PlayerID: " + AuthenticationService.Instance.PlayerId);
+
+
+        if (!AuthenticationService.Instance.IsSignedIn)
+        {
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            Debug.Log("Signed in. PlayerID: " + AuthenticationService.Instance.PlayerId);
+        }
+        else
+        {
+            Debug.Log("Already signed in. PlayerID: " + AuthenticationService.Instance.PlayerId);
+        }
         await VivoxService.Instance.InitializeAsync();
 
     }
@@ -26,7 +44,7 @@ public class VoiceController : MonoBehaviour
     {
         Debug.Log("Logging into Vivox...");
         LoginOptions options = new LoginOptions();
-        options.DisplayName = "Test User";
+        options.DisplayName = "Test User 2";
         options.EnableTTS = true;
 
         await VivoxService.Instance.LoginAsync(options);
