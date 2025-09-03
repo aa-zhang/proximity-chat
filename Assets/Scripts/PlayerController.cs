@@ -25,6 +25,7 @@ public class PlayerController : NetworkBehaviour
     private float cameraVerticalRotation = 0;
     private Camera playerCamera;
     private bool clientInitialized = false;
+    private bool updateVoicePosition = false;
 
     public override void OnStartClient()
     {
@@ -77,14 +78,19 @@ public class PlayerController : NetworkBehaviour
 
         // Menu input
         GetMenuInput();
+
+        if (updateVoicePosition)
+        {
+            VivoxService.Instance.Set3DPosition(
+            this.gameObject,
+            "GameWorld"
+        );
+        }
     }
 
     private void StartUpdatingVoicePosition()
     {
-        VivoxService.Instance.Set3DPosition(
-            this.gameObject,
-            "GameWorld"
-        );
+        updateVoicePosition = true;
     }
 
     private void GetMovementInput()

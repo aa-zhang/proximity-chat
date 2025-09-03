@@ -72,8 +72,8 @@ public class VoiceController : MonoBehaviour
 
             // Define 3D positional properties
             Channel3DProperties positionalChannelProperties = new Channel3DProperties(
-                audibleDistance: 50,   // Max distance a player can be heard
-                conversationalDistance: 10, // Full volume within this distance
+                audibleDistance: 10,   // Max distance a player can be heard
+                conversationalDistance: 2, // Full volume within this distance
                 audioFadeIntensityByDistanceaudio: 1.0f, // How fast volume fades with distance
                 audioFadeModel: AudioFadeModel.InverseByDistance // Fade curve
             );
